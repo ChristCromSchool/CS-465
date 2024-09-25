@@ -2,17 +2,31 @@
     {
         "name" : "Gale Reef",
         "image": "/images/reef1.jpg",
-        "description": "Gale Reef Sed et augue lorem. In sit amet placerat arcu. Mauris volutpat ipsum ac justo mollis vel vestibulum orci gravida. Vestibulum sit amet porttitor odio. Nulla facilisi. Fusce at pretium felis."
+        "description": "Gale Reef is a serene diving spot known for its vibrant coral life and crystal-clear waters. Ideal for beginner and advanced divers alike.",
+        "code": "GR001",
+        "length": 7,
+        "start": "2024-10-05",
+        "resort": "Coral Bay Resort",
+        "perPerson": 1500.00
     },
     {
         "name" : "Dawson's Reef",
         "image": "/images/reef2.jpg",
-        "description": "Dawnson's Reef Sed et augue lorem. In sit amet placerat arcu. Mauris volutpat ipsum ac justo mollis vel vestibulum orci gravida. Vestibulum sit amet porttitor odio. Nulla facilisi. Fusce at pretium felis."
+        "description": "Dawson's Reef offers breathtaking underwater views with extensive marine biodiversity, making it a favorite among experienced divers.",
+        "code": "DR002",
+        "length": 5,
+        "start": "2024-11-15",
+        "resort": "Ocean Breeze Lodge",
+        "perPerson": 1200.00
     },
     {
         "name" : "Claire's Reef",
         "image": "/images/reef3.jpg",
-        "description": "Claire's Reef Sed et augue lorem. In sit amet placerat arcu. Mauris volutpat ipsum ac justo mollis vel vestibulum orci gravida. Vestibulum sit amet porttitor odio. Nulla facilisi. Fusce at pretium felis."
+        "description": "Claire's Reef is a hidden gem with an untouched reef ecosystem, perfect for exploration and underwater photography.",
+        "code": "CR003",
+        "length": 10,
+        "start": "2024-12-01",
+        "resort": "Tropical Escape Resort",
+        "perPerson": 1800.00
     }
-
 ]
