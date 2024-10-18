@@ -6,7 +6,7 @@
       "start": "2021-02-14T08:00:00Z",
       "resort": "Emerald Bay, 3 stars",
       "perPerson": "799.00",
-      "image": "/images/reef1.jpg",
+      "image": "reef1.jpg",
       "description": "<p>Gale Reef Sed et augue lorem. In sit amet placerat arcu"
     },
     {
@@ -16,7 +16,7 @@
       "start": "2021-03-15T08:00:00Z",
       "resort": "Blue Lagoon, 4 stars",
       "perPerson": "1199.00",
-      "image": "/images/reef2.jpg",
+      "image": "reef2.jpg",
       "description": "<p>Dawson's Reef Integer magna leo, posuere et dignissim v"
     },
     {
@@ -26,7 +26,7 @@
       "start": "2021-06-21T08:00:00Z",
       "resort": "Coral Sands, 5 stars",
       "perPerson": "1999.00",
-      "image": "/images/reef3.jpg",
+      "image": "reef3.jpg",
       "description": "<p>Claire's Reef Donec sed felis risus. Nulla facilisi. Do"
     }
   ]
