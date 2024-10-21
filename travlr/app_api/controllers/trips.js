@@ -1,92 +1,114 @@
-const mongoose = require("mongoose");
-const Trip = require("../models/travlr");
-const Model = mongoose.model("trips");
+const mongoose = require('mongoose');
+const Trip = require('../models/travlr'); // Register model
+const Model = mongoose.model('trips');
+const User = require('../models/user');
 
-const tripsList = async (req, res) => {
-  const q = await Model.find({}).exec();
-  console.log(q);
-
-  if (!q) {
-    return res.status(404).json(arr);
+// Helper function to get the authenticated user
+const getUser = (req, res, callback) => {
+  if (req.payload && req.payload.email) {
+    User.findOne({ email: req.payload.email })
+      .exec((err, user) => {
+        if (!user) {
+          return res.status(404).json({
+            "message": "User not found"
+          });
+        } else if (err) {
+          console.error(err);
+          return res.status(404).json(err);
+        }
+        callback(req, res, user);
+      });
   } else {
-    return res.status(200).json(q);
+    return res.status(400).json({
+      "message": "Unauthorized request"
+    });
   }
 };
 
-const tripsFindByCode = async (req, res) => {
-    const q = await Model.find({'code' : req.params.tripCode }).exec();
-    console.log(q);
-  
-    if (!q) {
-      return res.status(404).json(arr);
-    } else {
+// GET: /trips - lists all the trips
+const tripsList = async(req, res) => {
+  const q = await Model
+      .find({}) // No filter, return all records
+      .exec();
+
+  if(!q) {
+      return res.status(404).json(err);
+  } else {
       return res.status(200).json(q);
-    }
-  };
-
-const tripsAddTrip = async(req, res) =>{
-  const newTrip = new Trip({
-    code: req.body.code,
-    name: req.body.name,
-    length: req.body.length,
-    start: req.body.start,
-    resort: req.body.resort,
-    perPerson: req.body.perPerson,
-    image: req.body.image,
-    description: req.body.description,
-  });
-
-  const q = await newTrip.save();
-
-  if(!q)
-  {
-    return res.status(400).json(err);
-  } else{
-
-    return res.status(201).json(q);
   }
-}
-// PUT: /trips/:tripCode - Adds a new Trip
-// Regardless of outcome, response must include HTML status code
-// and JSON message to the requesting client
-const tripsUpdateTrip = async(req, res) => {
-      // Uncomment for debugging
-      console.log(req.params);
-      console.log(req.body);
-      const q = await Model
-          .findOneAndUpdate(
-  {'code': req.params.tripCode },
-              {
-                  code: req.body.code,
-                  name: req.body.name,
-                  length: req.body.length,
-                  start: req.body.start,
-                  resort: req.body.resort,
-                  perPerson: req.body.perPerson,
-                  image: req.body.image,
-                  description: req.body.description
-              }
-          )
-  .exec();
-  if(!q)
-    { // Database returned no data
-                return res
-    .status(400)
-                    .json(err);
-    } else { // Return resulting updated trip
-                return res
-    .status(201)
-                    .json(q);
-            }    
-                   
-            // Uncomment the following line to show results of operation
-            // on the console
-            // console.log(q);
-    };
+};
+
+// GET: /trips/:tripCode - lists a single trip
+const tripsFindByCode = async(req, res) => {
+  const q = await Model
+      .find({ 'code' : req.params.tripCode }) // Return single record
+      .exec();
+
+  if(!q) {
+      return res.status(404).json(err);
+  } else {
+      return res.status(200).json(q);
+  }
+};
+
+// POST: /trips - Adds a new Trip
+const tripsAddTrip = async (req, res) => {
+  getUser(req, res, (req, res, user) => {
+    const newTrip = new Trip({
+      code: req.body.code,
+      name: req.body.name,
+      length: req.body.length,
+      start: req.body.start,
+      resort: req.body.resort,
+      perPerson: req.body.perPerson,
+      image: req.body.image,
+      description: req.body.description
+    });
+
+    newTrip.save((err, trip) => {
+      if (err) {
+        return res.status(400).json(err);
+      } else {
+        return res.status(201).json(trip);
+      }
+    });
+  });
+};
+
+// PUT: /trips/:tripCode - Updates an existing Trip
+const tripsUpdateTrip = async (req, res) => {
+  getUser(req, res, (req, res, user) => {
+    Model.findOneAndUpdate(
+      { 'code': req.params.tripCode },
+      {
+        code: req.body.code,
+        name: req.body.name,
+        length: req.body.length,
+        start: req.body.start,
+        resort: req.body.resort,
+        perPerson: req.body.perPerson,
+        image: req.body.image,
+        description: req.body.description
+      }, { new: true }
+    )
+    .exec((err, trip) => {
+      if (err) {
+        return res.status(400).json(err);
+      } else if (!trip) {
+        return res.status(404).json({
+          "message": "Trip not found"
+        });
+      } else {
+        return res.status(200).json(trip);
+      }
+    });
+  });
+};
+
 module.exports = {
   tripsList,
   tripsFindByCode,
   tripsAddTrip,
-  tripsUpdateTrip
-
+  tripsUpdateTrip,
+  User
 };
