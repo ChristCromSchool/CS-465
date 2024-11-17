@@ -20,7 +20,7 @@ export class EditTripComponent implements OnInit {
     message: string = '';
 
     constructor(
-        private formBuilder: FormBuilder,
+        public formBuilder: FormBuilder,
         private router: Router,
         private tripDataService: TripDataService,
         private authService: AuthenticationService

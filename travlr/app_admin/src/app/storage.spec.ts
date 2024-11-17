@@ -1,7 +1,7 @@
-import { Storage } from './storage';
+import {BROWSER_STORAGE} from './storage';
 
 describe('Storage', () => {
-  it('should create an instance', () => {
-    expect(new Storage()).toBeTruthy();
+  it('should have a valid injection token', () => {
+    expect(BROWSER_STORAGE).toBeTruthy();
   });
 });
