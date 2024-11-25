@@ -6,6 +6,11 @@ import { NavbarComponent } from './navbar/navbar.component';
 import { By } from '@angular/platform-browser';
 import { AuthenticationService } from './services/authentication.service';
 import { TripDataService } from './services/trip-data.service';
+import { NgModule } from '@angular/core';
+
+import { BrowserModule } from '@angular/platform-browser';
+
+import { FormsModule } from '@angular/forms';
 
 describe('AppComponent', () => {
   let component: AppComponent;

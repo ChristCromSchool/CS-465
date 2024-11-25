@@ -19,4 +19,7 @@ router.route('/trips').get(tripsController.tripsList).post(auth,tripsController.
 
 router.route('/trips/:tripCode').get(tripsController.tripsFindByCode).put(auth,tripsController.tripsUpdateTrip);
 
+// Add Google OAuth callback route
+router.post('/auth/google/callback', authController.googleCallback);
+
 module.exports = router;

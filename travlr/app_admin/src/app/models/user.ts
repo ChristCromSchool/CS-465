@@ -1,5 +1,7 @@
+// app_admin/src/app/models/user.ts
 export class User {
-    email!: string;
-    password!:string;
-    name!: string;
-    }
+  name: string = '';
+  email: string = '';
+  password: string = '';
+  googleId?: string;
+}
