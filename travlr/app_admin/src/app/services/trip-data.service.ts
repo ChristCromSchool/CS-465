@@ -1,11 +1,13 @@
 import { Injectable, Inject } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { User } from '../models/user';
 import { AuthResponse } from '../models/authresponse';
 import { BROWSER_STORAGE } from '../storage';
 import { Trip } from '../models/trip';
-
+import { TrieService } from './trie.service';
+import { SearchParams, } from '../models/search-params';
+import {  SearchResult } from '../models/search-result';
 @Injectable({
   providedIn: 'root'
 })
@@ -15,8 +17,21 @@ export class TripDataService {
 
   constructor(
     private http: HttpClient,
-    @Inject(BROWSER_STORAGE) private storage: Storage
-  ) {}
+    @Inject(BROWSER_STORAGE) private storage: Storage,
+    private trieService: TrieService
+  ) {
+    this.initializeSearchIndex();
+  }
+
+  private async initializeSearchIndex() {
+    const trips = await this.getTrips().toPromise();
+    if (trips) {
+      trips.forEach(trip => {
+        this.trieService.insert(trip.name);
+        this.trieService.insert(trip.resort);
+      });
+    }
+  }
 
   private getAuthHeaders(): HttpHeaders {
     const token = this.storage.getItem('travlr-token');
@@ -32,6 +47,17 @@ export class TripDataService {
     return this.http.get<Trip[]>(this.url);
   }
 
+  getTripsWithPagination(params: SearchParams): Observable<SearchResult> {
+    const queryParams = new HttpParams()
+      .set('page', params.page?.toString() || '1')
+      .set('pageSize', params.pageSize?.toString() || '10')
+      .set('query', params.query || '')
+      .set('sortBy', params.sortBy || 'name')
+      .set('sortDirection', params.sortDirection || 'asc');
+
+    return this.http.get<SearchResult>(`${this.apiBaseUrl}/trips`, { params: queryParams });
+  }
+
   addTrip(formData: Trip): Observable<Trip> {
     const headers = this.getAuthHeaders();
     return this.http.post<Trip>(this.url, formData, { headers });
@@ -44,6 +70,10 @@ export class TripDataService {
   updateTrip(formData: Trip): Observable<Trip> {
     const headers = this.getAuthHeaders();
     return this.http.put<Trip>(`${this.url}/${formData.code}`, formData, { headers });
+  }
+
+  getSuggestions(query: string): string[] {
+    return this.trieService.search(query);
   }
 
   public login(user: User): Promise<AuthResponse> {
