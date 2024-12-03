@@ -7,4 +7,3 @@ export interface SearchResult {
   page: number;
   pageSize: number;
 }
-

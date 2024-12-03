@@ -115,10 +115,8 @@ const tripsUpdateTrip = async (req, res) => {
 const getPaginatedTrips = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
-    const pageSize = parseInt(req.query.pageSize) || 10;
+    const pageSize = parseInt(req.query.pageSize) || 3; // Default to 3
     const query = req.query.query || '';
-    const sortBy = req.query.sortBy || 'name';
-    const sortDirection = req.query.sortDirection === 'desc' ? -1 : 1;
 
     const filter = query ? {
       $or: [
@@ -130,7 +128,6 @@ const getPaginatedTrips = async (req, res) => {
 
     const total = await Trip.countDocuments(filter);
     const trips = await Trip.find(filter)
-      .sort({ [sortBy]: sortDirection })
       .skip((page - 1) * pageSize)
       .limit(pageSize);
 

@@ -8,11 +8,12 @@ import { AuthenticationService } from '../services/authentication.service';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { NgbPaginationModule } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
   selector: 'app-trip-listing',
   standalone: true,
-  imports: [CommonModule, FormsModule, TripCardComponent, NgbPaginationModule],
+  imports: [CommonModule, FormsModule, TripCardComponent, NgbPaginationModule, NgbModule],
   template: `
     <div class="container">
       <div class="search-container mb-4">
@@ -22,54 +23,71 @@ import { NgbPaginationModule } from '@ng-bootstrap/ng-bootstrap';
           [(ngModel)]="searchQuery"
           (input)="onSearchInput()"
           placeholder="Search trips...">
-        <ul *ngIf="suggestions.length" class="suggestions-list">
-          <li *ngFor="let suggestion of suggestions"
-              (click)="selectSuggestion(suggestion)">
+        <div *ngIf="suggestions.length" class="suggestions-dropdown">
+          <div *ngFor="let suggestion of suggestions"
+               class="suggestion-item"
+               (click)="selectSuggestion(suggestion)">
             {{suggestion}}
-          </li>
-        </ul>
+          </div>
+        </div>
       </div>
 
-      <div class="table-responsive">
-        <table class="table">
-          <!-- Table headers with sort controls -->
-          <thead>
-            <tr>
-              <th *ngFor="let col of columns"
-                  (click)="sort(col.key)"
-                  [class.sorted]="sortBy === col.key">
-                {{col.label}}
-                <i class="fas"
-                   [class.fa-sort-up]="sortBy === col.key && sortDirection === 'asc'"
-                   [class.fa-sort-down]="sortBy === col.key && sortDirection === 'desc'">
-                </i>
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let trip of trips">
-              <!-- Trip data cells -->
-            </tr>
-          </tbody>
-        </table>
-
-        <ngb-pagination
-          [collectionSize]="total"
-          [(page)]="currentPage"
-          [pageSize]="pageSize"
-          (pageChange)="onPageChange($event)">
-        </ngb-pagination>
+      <div class="row">
+        <div *ngFor="let trip of trips" class="col-md-4 mb-4">
+          <div class="card">
+            <img [src]="'assets/images/' + trip.image" class="card-img-top" [alt]="trip.name">
+            <div class="card-body">
+              <h5 class="card-title">{{trip.name}}</h5>
+              <h6 class="card-subtitle mb-2 text-muted">{{trip.resort}}</h6>
+              <p class="card-text">{{trip.description}}</p>
+              <p class="card-text">
+                <small class="text-muted">
+                  Length: {{trip.length}} days | Price: {{trip.perPerson | currency}}
+                </small>
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
+
+      <ngb-pagination
+        [collectionSize]="total"
+        [(page)]="currentPage"
+        [pageSize]="pageSize"
+        (pageChange)="onPageChange($event)">
+      </ngb-pagination>
     </div>
   `,
   styleUrl: './trip-listing.component.css',
   providers: [TripDataService],
+  styles: [`
+    .suggestions-dropdown {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: white;
+      border: 1px solid #ddd;
+      border-top: none;
+      max-height: 200px;
+      overflow-y: auto;
+      z-index: 1000;
+    }
+    .suggestion-item {
+      padding: 8px 12px;
+      cursor: pointer;
+    }
+    .suggestion-item:hover {
+      background-color: #f8f9fa;
+    }
+  `]
 })
 export class TripListingComponent implements OnInit {
   trips: Trip[] = [];
+  filteredTrips: Trip[] = [];
   total = 0;
   currentPage = 1;
-  pageSize = 10;
+  pageSize = 3; // Changed to 3 items per page
   searchQuery = '';
   suggestions: string[] = [];
   sortBy = 'name';
@@ -81,6 +99,11 @@ export class TripListingComponent implements OnInit {
     { key: 'length', label: 'Length' },
     { key: 'price', label: 'Price' }
   ];
+
+  get paginatedTrips(): Trip[] {
+    const startIndex = (this.currentPage - 1) * this.pageSize;
+    return this.filteredTrips.slice(startIndex, startIndex + this.pageSize);
+  }
 
   constructor(
     private tripDataService: TripDataService,
@@ -95,20 +118,47 @@ export class TripListingComponent implements OnInit {
   }
 
   loadTrips() {
+    console.log('Loading trips...');
     this.tripDataService.getTripsWithPagination({
       query: this.searchQuery,
       page: this.currentPage,
       pageSize: this.pageSize,
       sortBy: this.sortBy,
       sortDirection: this.sortDirection
-    }).subscribe(result => {
-      this.trips = result.trips;
-      this.total = result.total;
+    }).subscribe({
+      next: (result) => {
+        // Filter trips based on search query
+        if (this.searchQuery) {
+          const query = this.searchQuery.toLowerCase();
+          this.filteredTrips = result.trips.filter(trip =>
+            trip.name.toLowerCase().includes(query) ||
+            trip.resort.toLowerCase().includes(query) ||
+            trip.description.toLowerCase().includes(query)
+          );
+        } else {
+          this.filteredTrips = result.trips;
+        }
+        this.total = this.filteredTrips.length;
+        this.trips = this.paginatedTrips;
+      },
+      error: (error) => console.error('Error loading trips:', error)
     });
   }
 
   onSearchInput() {
-    this.suggestions = this.tripDataService.getSuggestions(this.searchQuery);
+    console.log('Search query:', this.searchQuery);
+    this.currentPage = 1; // Reset to first page when searching
+    if (this.searchQuery) {
+      this.suggestions = this.trips
+        .map(trip => trip.name)
+        .filter(name =>
+          name.toLowerCase().includes(this.searchQuery.toLowerCase())
+        );
+      console.log('Suggestions:', this.suggestions);
+    } else {
+      this.suggestions = [];
+    }
+    this.loadTrips();
   }
 
   selectSuggestion(suggestion: string) {
@@ -129,7 +179,7 @@ export class TripListingComponent implements OnInit {
 
   onPageChange(page: number) {
     this.currentPage = page;
-    this.loadTrips();
+    this.trips = this.paginatedTrips;
   }
 
   public addTrip(): void {

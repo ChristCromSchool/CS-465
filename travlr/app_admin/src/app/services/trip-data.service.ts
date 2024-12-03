@@ -8,29 +8,32 @@ import { Trip } from '../models/trip';
 import { TrieService } from './trie.service';
 import { SearchParams, } from '../models/search-params';
 import {  SearchResult } from '../models/search-result';
+import { tap, map } from 'rxjs/operators';
+
 @Injectable({
   providedIn: 'root'
 })
 export class TripDataService {
-  apiBaseUrl = 'http://localhost:3000/api';
-  url = 'http://localhost:3000/api/trips';
+  private apiBaseUrl = 'http://localhost:3000/api';
 
   constructor(
     private http: HttpClient,
-    @Inject(BROWSER_STORAGE) private storage: Storage,
-    private trieService: TrieService
+    private trieService: TrieService,
+    @Inject(BROWSER_STORAGE) private storage: Storage
   ) {
+    // Initialize search index when service starts
     this.initializeSearchIndex();
   }
 
   private async initializeSearchIndex() {
-    const trips = await this.getTrips().toPromise();
-    if (trips) {
+    console.log('Initializing search index...');
+    this.getTrips().subscribe(trips => {
+      console.log('Indexing trips:', trips);
       trips.forEach(trip => {
         this.trieService.insert(trip.name);
         this.trieService.insert(trip.resort);
       });
-    }
+    });
   }
 
   private getAuthHeaders(): HttpHeaders {
@@ -44,36 +47,44 @@ export class TripDataService {
   }
 
   getTrips(): Observable<Trip[]> {
-    return this.http.get<Trip[]>(this.url);
+    return this.http.get<Trip[]>(`${this.apiBaseUrl}/trips`);
   }
 
   getTripsWithPagination(params: SearchParams): Observable<SearchResult> {
-    const queryParams = new HttpParams()
-      .set('page', params.page?.toString() || '1')
-      .set('pageSize', params.pageSize?.toString() || '10')
-      .set('query', params.query || '')
-      .set('sortBy', params.sortBy || 'name')
-      .set('sortDirection', params.sortDirection || 'asc');
-
-    return this.http.get<SearchResult>(`${this.apiBaseUrl}/trips`, { params: queryParams });
+    return this.http.get<any>(`${this.apiBaseUrl}/trips`, {
+      params: new HttpParams()
+        .set('page', params.page?.toString() || '1')
+        .set('pageSize', params.pageSize?.toString() || '10')
+        .set('query', params.query || '')
+    }).pipe(
+      map(response => ({
+        trips: response, // API returns array directly
+        total: response.length,
+        page: params.page || 1,
+        pageSize: params.pageSize || 10
+      }))
+    );
   }
 
   addTrip(formData: Trip): Observable<Trip> {
     const headers = this.getAuthHeaders();
-    return this.http.post<Trip>(this.url, formData, { headers });
+    return this.http.post<Trip>(`${this.apiBaseUrl}/trips`, formData, { headers });
   }
 
   getTrip(tripCode: string): Observable<Trip[]> {
-    return this.http.get<Trip[]>(`${this.url}/${tripCode}`);
+    return this.http.get<Trip[]>(`${this.apiBaseUrl}/${tripCode}`);
   }
 
   updateTrip(formData: Trip): Observable<Trip> {
     const headers = this.getAuthHeaders();
-    return this.http.put<Trip>(`${this.url}/${formData.code}`, formData, { headers });
+    return this.http.put<Trip>(`${this.apiBaseUrl}/${formData.code}`, formData, { headers });
   }
 
   getSuggestions(query: string): string[] {
-    return this.trieService.search(query);
+    if (!query) return [];
+    const suggestions = this.trieService.search(query);
+    console.log('Search suggestions for:', query, suggestions);
+    return suggestions;
   }
 
   public login(user: User): Promise<AuthResponse> {
