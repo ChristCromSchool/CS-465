@@ -11,7 +11,7 @@ import { AuthenticationService } from '../services/authentication.service';
     standalone: true,
     imports: [CommonModule, ReactiveFormsModule],
     templateUrl: './edit-trip.component.html',
-    styleUrl: './edit-trip.component.css'
+    styleUrls: ['./edit-trip.component.css']
 })
 export class EditTripComponent implements OnInit {
     public editForm!: FormGroup;
@@ -24,7 +24,19 @@ export class EditTripComponent implements OnInit {
         private router: Router,
         private tripDataService: TripDataService,
         private authService: AuthenticationService
-    ) { }
+    ) {
+        this.editForm = this.formBuilder.group({
+            _id: [''],
+            code: ['', Validators.required],
+            name: ['', Validators.required],
+            length: ['', Validators.required],
+            start: ['', Validators.required],
+            resort: ['', Validators.required],
+            perPerson: ['', Validators.required],
+            image: ['', Validators.required],
+            description: ['', Validators.required]
+        });
+    }
 
     public onSubmit() {
         this.submitted = true;
@@ -58,21 +70,33 @@ export class EditTripComponent implements OnInit {
     }
 
     ngOnInit(): void {
-        // Check authentication first
-        if (!this.authService.isLoggedIn()) {
-            this.router.navigate(['/login']);
-            return;
-        }
-
         const tripCode = localStorage.getItem("tripCode");
         if (!tripCode) {
-            alert("Something wrong, couldn't find where I stashed tripCode!");
-            this.router.navigate(['/trips']);
+            console.error("No trip code found");
             return;
         }
 
-        console.log('EditTripComponent::ngOnInit');
-        console.log('tripcode:', tripCode);
+        this.tripDataService.getTrip(tripCode).subscribe({
+            next: (trip: any) => {
+                console.log('Trip data:', trip);
+                if (trip && trip[0]) {
+                    this.editForm.patchValue({
+                        _id: trip[0]._id,
+                        code: trip[0].code,
+                        name: trip[0].name,
+                        length: trip[0].length,
+                        start: trip[0].start,
+                        resort: trip[0].resort,
+                        perPerson: trip[0].perPerson,
+                        image: trip[0].image,
+                        description: trip[0].description
+                    });
+                }
+            },
+            error: (err) => {
+                console.error(err);
+            }
+        });
 
         this.editForm = this.formBuilder.group({
             _id: [''],
@@ -85,27 +109,6 @@ export class EditTripComponent implements OnInit {
             image: ['', Validators.required],
             description: ['', Validators.required]
         });
-
-        this.tripDataService.getTrip(tripCode)
-            .subscribe({
-                next: (value: any) => {
-                    if (!value || !value[0]) {
-                        this.message = 'No Trip Retrieved!';
-                        return;
-                    }
-                    this.trip = value[0];
-                    this.editForm.patchValue(value[0]);
-                    this.message = `Trip: ${tripCode} retrieved`;
-                    console.log(this.message);
-                },
-                error: (error: any) => {
-                    console.log('Error retrieving trip:', error);
-                    if (error.status === 404) {
-                        this.message = 'Trip not found';
-                        this.router.navigate(['/trips']);
-                    }
-                }
-            });
     }
 
     get f() { return this.editForm.controls; }

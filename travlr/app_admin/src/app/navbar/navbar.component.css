@@ -1,0 +1,24 @@
+/* app_admin/src/app/navbar/navbar.component.css */
+.navbar-brand img {
+    max-height: 40px;
+}
+
+.badge {
+    margin-left: 5px;
+}
+
+.navbar-end {
+    margin-left: auto;
+    padding-right: 15px;
+}
+
+.navbar-item {
+    cursor: pointer;
+    padding: 8px 12px;
+    text-decoration: none;
+    color: rgba(0,0,0,.55);
+}
+
+.navbar-item:hover {
+    color: rgba(0,0,0,.7);
+}

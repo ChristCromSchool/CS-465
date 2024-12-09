@@ -3,24 +3,30 @@ const Trip = require("../models/travlr");
 const Model = mongoose.model("trips");
 
 const tripsList = async (req, res) => {
-  const q = await Model.find({}).exec();
-  console.log(q);
+  try {
+    const trips = await Model.find({}).exec();
+    console.log(trips);
 
-  if (!q) {
-    return res.status(404).json({ message: "No trips found" });
-  } else {
-    return res.status(200).json(q);
+    if (!trips || trips.length === 0) {
+      return res.status(404).json({ message: "No trips found" });
+    }
+    return res.status(200).json(trips);
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
   }
 };
 
 const tripsFindByCode = async (req, res) => {
-  const q = await Model.find({ code: req.params.tripCode }).exec();
-  console.log(q);
+  try {
+    const trip = await Model.find({ code: req.params.tripCode }).exec();
+    console.log(trip);
 
-  if (!q) {
-    return res.status(404).json({ message: "Trip not found" });
-  } else {
-    return res.status(200).json(q);
+    if (!trip || trip.length === 0) {
+      return res.status(404).json({ message: "Trip not found" });
+    }
+    return res.status(200).json(trip);
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
   }
 };
 
@@ -32,84 +38,39 @@ const getUser = (req, res, callback) => {
         if (err) {
           res.status(400).json(err);
           return;
-        } else if (!trip) {
-          res.status(404).json({ 
-            "message": "Trip not found" 
-          });
-          return;
         }
-        
-        if (callback) {
-          callback(req, res, trip);
-        }
+        callback(req, res, trip);
       });
-  } else {
-    res.status(404).json({
-      "message": "Not found, tripId required"
-    });
-  }
-};
-
-const tripsAddTrip = async (req, res) => {
-  try {
-    const newTrip = await Trip.create({
-      code: req.body.code,
-      name: req.body.name,
-      length: req.body.length,
-      start: req.body.start,
-      resort: req.body.resort,
-      perPerson: req.body.perPerson,
-      image: req.body.image,
-      description: req.body.description
-    });
-    
-    return res.status(201).json(newTrip);
-  } catch (err) {
-    return res.status(400).json(err);
   }
 };
 
 const tripsUpdateTrip = async (req, res) => {
   try {
-    console.log('Update request received for trip code:', req.params.tripCode);
-    console.log('Update data:', req.body);
-
-    const existingTrip = await Trip.findOne({ code: req.params.tripCode });
-    if (!existingTrip) {
-      return res.status(404).json({
-        message: "Trip not found with code " + req.params.tripCode
-      });
+    const trip = await Trip.findOne({ code: req.params.tripCode });
+    if (!trip) {
+      return res.status(404).json({ message: "Trip not found" });
     }
-
-    const updatedTrip = await Trip.findOneAndUpdate(
-      { code: req.params.tripCode },
-      {
-        code: req.body.code,
-        name: req.body.name,
-        length: req.body.length,
-        start: req.body.start,
-        resort: req.body.resort,
-        perPerson: req.body.perPerson,
-        image: req.body.image,
-        description: req.body.description
-      },
-      { new: true }
-    );
-
-    if (!updatedTrip) {
-      return res.status(404).json({
-        message: "Failed to update trip with code " + req.params.tripCode
-      });
-    }
-
-    return res.status(200).json(updatedTrip);
+    trip.code = req.body.code;
+    trip.name = req.body.name;
+    trip.length = req.body.length;
+    trip.start = req.body.start;
+    trip.resort = req.body.resort;
+    trip.perPerson = req.body.perPerson;
+    trip.image = req.body.image;
+    trip.description = req.body.description;
+    
+    await trip.save();
+    res.status(200).json(trip);
   } catch (err) {
-    console.error('Error updating trip:', err);
-    return res.status(500).json({
-      message: "Error updating trip with code " + req.params.tripCode,
-      error: err.message
-    });
+    res.status(500).json({ error: err.message });
   }
+};
+
+module.exports = {
+  tripsList,
+  tripsFindByCode,
+  getUser,
+  tripsUpdateTrip
 };
 
 const getPaginatedTrips = async (req, res) => {
@@ -152,7 +113,18 @@ Trip.collection.createIndex({
 module.exports = {
   tripsList,
   tripsFindByCode,
-  tripsAddTrip,
-  tripsUpdateTrip,
+  getUser,
   getPaginatedTrips,
+  tripsUpdateTrip
 };
+
+const tripSchema = mongoose.Schema({
+  // Existing fields...
+  inventory: {
+    type: Number,
+    required: true,
+    default: 10
+  }
+});
+
+mongoose.model('Trip', tripSchema);

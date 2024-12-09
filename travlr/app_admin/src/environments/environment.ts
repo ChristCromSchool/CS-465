@@ -3,5 +3,6 @@ export const environment = {
   production: false,
   apiBaseUrl: 'http://localhost:3000/api',
   defaultPageSize: 3,
-  googleClientId: '509124345847-63b1o6akdo3oc7mm133ipf09sturm0r6.apps.googleusercontent.com'
+  googleClientId: '509124345847-63b1o6akdo3oc7mm133ipf09sturm0r6.apps.googleusercontent.com',
+  stripePublishableKey: 'pk_test_dPAj9z2XRlLfgAqPJgXNB4Ep'
 };

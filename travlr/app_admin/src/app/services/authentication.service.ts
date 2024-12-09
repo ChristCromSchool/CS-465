@@ -83,8 +83,7 @@ export class AuthenticationService {
   }
 
   public getToken(): string {
-    const token = this.storage.getItem('travlr-token');
-    return token || '';
+    return localStorage.getItem('travlr-token') || '';
   }
 
   public saveToken(token: string): void {
@@ -123,15 +122,7 @@ export class AuthenticationService {
 
   public isLoggedIn(): boolean {
     const token = this.getToken();
-    if (token) {
-      try {
-        const payload = JSON.parse(atob(token.split('.')[1]));
-        return payload.exp > (Date.now() / 1000);
-      } catch (error) {
-        return false;
-      }
-    }
-    return false;
+    return !!token;
   }
 
   public getCurrentUser(): any {
@@ -155,20 +146,20 @@ export class AuthenticationService {
     }
   }
 
-  public initiateGoogleLogin() {
+  public initiateGoogleLogin(): void {
+    console.log('Starting Google login...');
     const params = {
       client_id: environment.googleClientId,
       redirect_uri: 'http://localhost:4200/auth/callback',
       response_type: 'code',
-      scope: 'email profile',
-      access_type: 'offline'
+      scope: 'email profile'
     };
 
     const queryString = Object.entries(params)
       .map(([key, value]) => `${key}=${encodeURIComponent(value)}`)
       .join('&');
 
-    window.location.href = `${this.GOOGLE_AUTH_URL}?${queryString}`;
+    window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?${queryString}`;
   }
 
   // Update other auth methods to emit state changes

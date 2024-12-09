@@ -34,19 +34,7 @@ import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 
       <div class="row">
         <div *ngFor="let trip of trips" class="col-md-4 mb-4">
-          <div class="card">
-            <img [src]="'assets/images/' + trip.image" class="card-img-top" [alt]="trip.name">
-            <div class="card-body">
-              <h5 class="card-title">{{trip.name}}</h5>
-              <h6 class="card-subtitle mb-2 text-muted">{{trip.resort}}</h6>
-              <p class="card-text">{{trip.description}}</p>
-              <p class="card-text">
-                <small class="text-muted">
-                  Length: {{trip.length}} days | Price: {{trip.perPerson | currency}}
-                </small>
-              </p>
-            </div>
-          </div>
+          <app-trip-card [trip]="trip"></app-trip-card>
         </div>
       </div>
 

@@ -87,24 +87,27 @@ const googleLogin = async (req, res) => {
   }
 };
 
-// Add Google OAuth callback handler
 const googleCallback = async (req, res) => {
   try {
-    const { code } = req.body;
-    
+    console.log('Received callback with code:', req.body.code);
+
     // Exchange code for tokens
     const tokenResponse = await axios.post('https://oauth2.googleapis.com/token', {
-      code,
+      code: req.body.code,
       client_id: process.env.GOOGLE_CLIENT_ID,
       client_secret: process.env.GOOGLE_CLIENT_SECRET,
       redirect_uri: 'http://localhost:4200/auth/callback',
       grant_type: 'authorization_code'
     });
 
+    console.log('Token response received');
+
     // Get user info with access token
     const userInfo = await axios.get('https://www.googleapis.com/oauth2/v3/userinfo', {
       headers: { Authorization: `Bearer ${tokenResponse.data.access_token}` }
     });
+
+    console.log('User info:', userInfo.data);
 
     // Find or create user
     let user = await User.findOne({ email: userInfo.data.email });
@@ -122,14 +125,16 @@ const googleCallback = async (req, res) => {
     res.status(200).json({ token });
 
   } catch (error) {
-    console.error('Google auth error:', error);
-    res.status(401).json({ message: 'Authentication failed' });
+    console.error('Google auth error:', error.response?.data || error);
+    res.status(401).json({ 
+      message: 'Authentication failed',
+      error: error.message 
+    });
   }
 };
 
 module.exports = {
   register,
   login,
-  googleLogin,
   googleCallback
 };

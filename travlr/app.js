@@ -65,6 +65,10 @@ app.use('/users', usersRouter);
 app.use('/travel', travelRouter);
 app.use('/api', apiRouter)
 
+// app.js
+const cartRoutes = require('./app_api/routes/index');
+app.use('/api', cartRoutes);
+
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
   next(createError(404));
