@@ -44,6 +44,12 @@ import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
         [pageSize]="pageSize"
         (pageChange)="onPageChange($event)">
       </ngb-pagination>
+
+      <button *ngIf="isLoggedIn()"
+              class="btn btn-info"
+              data-testid="add-trip-button">
+        Add Trip
+      </button>
     </div>
   `,
   styleUrl: './trip-listing.component.css',

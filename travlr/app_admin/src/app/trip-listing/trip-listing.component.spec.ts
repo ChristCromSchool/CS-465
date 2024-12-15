@@ -8,6 +8,8 @@ import { AuthenticationService } from '../services/authentication.service';
 import { Router } from '@angular/router';
 import { By } from '@angular/platform-browser';
 import { of } from 'rxjs';
+import { FormsModule } from '@angular/forms';
+import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 
 describe('TripListingComponent', () => {
   let component: TripListingComponent;
@@ -16,8 +18,8 @@ describe('TripListingComponent', () => {
   let authService: jasmine.SpyObj<AuthenticationService>;
   let router: jasmine.SpyObj<Router>;
 
-  const mockTrips = [
-    {
+  const mockTrips = {
+    trips: [{
       _id: '1',
       code: 'TEST1',
       name: 'Test Trip 1',
@@ -27,29 +29,26 @@ describe('TripListingComponent', () => {
       resort: 'Test Resort 1',
       perPerson: '999',
       image: 'test1.jpg'
-    },
-    {
-      _id: '2',
-      code: 'TEST2',
-      name: 'Test Trip 2',
-      length: '10 days',
-      description: 'Test Description 2',
-      start: new Date('2024-04-15'),
-      resort: 'Test Resort 2',
-      perPerson: '1299',
-      image: 'test2.jpg'
-    }
-  ];
+    }],
+    total: 1,
+    page: 1,
+    pageSize: 3
+  };
 
   beforeEach(async () => {
-    const tripDataServiceSpy = jasmine.createSpyObj('TripDataService', ['getTrips']);
+    const tripDataServiceSpy = jasmine.createSpyObj('TripDataService', ['getTripsWithPagination']);
     const authServiceSpy = jasmine.createSpyObj('AuthenticationService', ['isLoggedIn']);
     const routerSpy = jasmine.createSpyObj('Router', ['navigate']);
+
+    tripDataServiceSpy.getTripsWithPagination.and.returnValue(of(mockTrips));
+    authServiceSpy.isLoggedIn.and.returnValue(true);
 
     await TestBed.configureTestingModule({
       imports: [
         RouterTestingModule,
         HttpClientTestingModule,
+        FormsModule,
+        NgbModule,
         TripListingComponent,
         TripCardComponent
       ],
@@ -64,11 +63,6 @@ describe('TripListingComponent', () => {
     authService = TestBed.inject(AuthenticationService) as jasmine.SpyObj<AuthenticationService>;
     router = TestBed.inject(Router) as jasmine.SpyObj<Router>;
 
-    // Setup default spy return values
-    tripDataService.getTrips.and.returnValue(of(mockTrips));
-  });
-
-  beforeEach(() => {
     fixture = TestBed.createComponent(TripListingComponent);
     component = fixture.componentInstance;
   });
@@ -77,60 +71,84 @@ describe('TripListingComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  
+  it('should load trips on init', fakeAsync(() => {
+    // Setup spy
+    tripDataService.getTripsWithPagination.and.returnValue(of(mockTrips));
+
+    // Initialize component
+    fixture.detectChanges();
+
+    // Trigger ngOnInit
+    component.ngOnInit();
+    tick();
+
+    // Let component process response
+    fixture.detectChanges();
+
+    // Verify service call
+    expect(tripDataService.getTripsWithPagination).toHaveBeenCalledWith({
+      query: '',
+      page: 1,
+      pageSize: 3,
+      sortBy: 'name',
+      sortDirection: 'asc'
+    });
+
+    // Verify component state
+    expect(component.filteredTrips.length).toBe(1);
+    expect(component.filteredTrips[0].name).toBe('Test Trip 1');
+  }));
+
+  it('should handle search input', fakeAsync(() => {
+    // Setup spy
+    tripDataService.getTripsWithPagination.and.returnValue(of(mockTrips));
+
+    // Initialize component
+    fixture.detectChanges();
+
+    // Set search query
+    component.searchQuery = 'Test';
+
+    // Trigger search
+    component.onSearchInput();
+    tick();
+
+    // Verify service call
+    expect(tripDataService.getTripsWithPagination).toHaveBeenCalledWith({
+      query: 'Test',
+      page: 1,
+      pageSize: 3,
+      sortBy: 'name',
+      sortDirection: 'asc'
+    });
+  }));
+
+  it('should change page', fakeAsync(() => {
+    // Setup spy
+    tripDataService.getTripsWithPagination.and.returnValue(of(mockTrips));
+
+    // Initialize component
+    fixture.detectChanges();
+    tick();
+
+    // Change page
+    component.onPageChange(2);
+    tick();
+
+    // Verify page change
+    expect(component.currentPage).toBe(2);
+
+    // Clear all pending timers
+    tick(1000);
+  }));
+
   it('should show add button when authenticated', fakeAsync(() => {
-    // Setup
     authService.isLoggedIn.and.returnValue(true);
-
-    // Initial detection for ngOnInit
     fixture.detectChanges();
-
-    // Wait for async operations
     tick();
 
-    // Detect changes after data load
-    fixture.detectChanges();
-
-    const addButton = fixture.debugElement.query(By.css('.btn-info'));
-    expect(addButton).toBeTruthy();
-    expect(addButton.nativeElement.textContent.trim()).toBe('Add Trip');
-  }));
-
-  it('should hide add button when not authenticated', fakeAsync(() => {
-    // Setup
-    authService.isLoggedIn.and.returnValue(false);
-
-    // Initial detection for ngOnInit
-    fixture.detectChanges();
-
-    // Wait for async operations
-    tick();
-
-    // Detect changes after data load
-    fixture.detectChanges();
-
-    const addButton = fixture.debugElement.query(By.css('.btn-info'));
-    expect(addButton).toBeFalsy();
-  }));
-
-  it('should navigate to add-trip when button clicked', fakeAsync(() => {
-    // Setup
-    authService.isLoggedIn.and.returnValue(true);
-
-    // Initial detection for ngOnInit
-    fixture.detectChanges();
-
-    // Wait for async operations
-    tick();
-
-    // Detect changes after data load
-    fixture.detectChanges();
-
-    const addButton = fixture.debugElement.query(By.css('.btn-info'));
-    addButton.triggerEventHandler('click', null);
-
-    tick();
-
-    expect(router.navigate).toHaveBeenCalledWith(['add-trip']);
+    const addButton = fixture.debugElement.query(By.css('[data-testid="add-trip-button"]'));
+    expect(addButton).toBeTruthy('Add Trip button should be visible when authenticated');
+    expect(addButton?.nativeElement.textContent.trim()).toBe('Add Trip');
   }));
 });

@@ -11,9 +11,7 @@ import { StripeService } from '../services/stripe.service';
   template: `
     <div class="container mt-4">
       <h2>Shopping Cart</h2>
-      <div *ngIf="(cart$ | async)?.items?.length ?? 0 === 0" class="alert alert-info">
-        Your cart is empty
-      </div>
+      
       <div *ngIf="(cart$ | async)?.items?.length ?? 0 > 0">
         <div class="card mb-3" *ngFor="let item of (cart$ | async)?.items">
           <div class="card-body">
